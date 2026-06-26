@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+env/
+.env
+.venv
+pyvenv.cfg
+
+# Model weights (download separately)
+*.pt
+*.pth
+*.onnx
+*.weights
+
+# Output files
+output_detected.mp4
+*.mp4
+*.avi
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+runs/

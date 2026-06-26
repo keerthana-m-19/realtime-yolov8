@@ -1,24 +1,36 @@
-# app.py
+# app.py — Flask MJPEG streamer for browser-based demo
 from flask import Flask, Response, render_template_string
 import cv2
 from ultralytics import YOLO
 import time
-
-MODEL_NAME = "yolov8n.pt"
-CONFIDENCE_THRESHOLD = 0.25
-WEBCAM_ID = 0
+from config import (
+    MODEL_NAME, CONFIDENCE_THRESHOLD, WEBCAM_ID,
+    FLASK_HOST, FLASK_PORT, STREAM_WIDTH
+)
 
 app = Flask(__name__)
 model = YOLO(MODEL_NAME)
 model.conf = CONFIDENCE_THRESHOLD
 cap = cv2.VideoCapture(WEBCAM_ID)
 
-HTML_PAGE = """
+HTML_PAGE = f"""
 <!doctype html>
-<title>YOLOv8 Live Stream</title>
-<h2>YOLOv8 - Real Time Object Detection</h2>
-<img src="{{ url_for('video_feed') }}" width="800">
-<p>Press Ctrl+C in terminal to stop the server.</p>
+<html>
+<head>
+  <title>YOLOv8 Live Detection</title>
+  <style>
+    body {{ font-family: Arial, sans-serif; background: #111; color: #eee; text-align: center; padding: 20px; }}
+    h2 {{ color: #00ff88; }}
+    img {{ border: 2px solid #00ff88; border-radius: 8px; margin-top: 12px; }}
+    p {{ color: #aaa; font-size: 13px; }}
+  </style>
+</head>
+<body>
+  <h2>YOLOv8 — Real-Time Object Detection</h2>
+  <img src="{{{{ url_for('video_feed') }}}}" width="{STREAM_WIDTH}">
+  <p>Press <kbd>Ctrl+C</kbd> in terminal to stop the server.</p>
+</body>
+</html>
 """
 
 def gen_frames():
@@ -27,15 +39,16 @@ def gen_frames():
         success, frame = cap.read()
         if not success:
             break
+
         results = model(frame)[0]
         annotated = results.plot()
-        # Add FPS
+
         curr = time.time()
         fps = 1.0 / (curr - prev_time) if prev_time else 0.0
         prev_time = curr
         cv2.putText(annotated, f"FPS: {fps:.1f}", (10, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,255,0), 2)
-        # Encode as JPEG
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+
         ret, buffer = cv2.imencode('.jpg', annotated)
         frame_bytes = buffer.tobytes()
         yield (b'--frame\r\n'
@@ -51,4 +64,4 @@ def video_feed():
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    app.run(host=FLASK_HOST, port=FLASK_PORT, debug=False)
